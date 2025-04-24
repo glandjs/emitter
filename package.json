@@ -20,16 +20,13 @@
     "typescript": ">=5"
   },
   "scripts": {
-    "build": "",
+    "build": "bun build ./src/index.ts  --outdir ./dist --minify --format esm --target bun",
     "lint": "",
     "typecheck": "",
     "release": "",
-    "test": "",
-    "test:unit": "",
-    "test:integration": "",
-    "test:stress": "",
-    "test:fuzzing": "",
-    "bench": ""
+    "test": "bun test ./tests/*",
+    "test:integration": "bun test ./tests/emitter.integration.ts",
+    "bench": "bun bench/benchmark.ts"
   },
   "publishConfig": {
     "access": "public"
@@ -43,6 +40,7 @@
     "bun"
   ],
   "devDependencies": {
+    "@types/bun": "latest",
     "typescript": "^5.5.4"
   }
 }

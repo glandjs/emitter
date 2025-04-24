@@ -2,9 +2,7 @@
 node_modules/
 
 # bundle
-src/**/**/*.d.ts
-src/**/**/*.js
-
+dist/*
 # misc
 .DS_Store
 .idea/
