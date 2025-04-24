@@ -1,0 +1,84 @@
+name: 'Bug Report'
+description: 'Report an issue or unexpected behavior in Gland'
+labels: ['bug', 'needs triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Before Submitting a Bug Report
+
+        Thank you for taking the time to file a bug report. Please help us address the issue efficiently by:
+
+        - Checking if a similar issue already exists in the issue tracker
+        - Providing as much detail as possible about the problem
+
+  - type: checkboxes
+    attributes:
+      label: 'Prerequisites'
+      description: 'Please confirm these steps before submitting your issue'
+      options:
+        - label: "I have searched for similar issues and couldn't find a solution"
+          required: true
+        - label: 'I have checked the documentation and found no answer'
+          required: true
+
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: 'Current Behavior'
+      description: 'A clear description of what actually happens'
+      placeholder: 'When I perform X action, the framework does Y instead of Z...'
+
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: 'Expected Behavior'
+      description: 'A clear description of what you expected to happen'
+      placeholder: 'I expected the framework to...'
+
+  - type: textarea
+    attributes:
+      label: 'Code Example'
+      description: 'please provide the smallest code sample that demonstrates the issue'
+      value: |
+        ```typescript
+        // Your code here
+        ```
+
+  - type: dropdown
+    attributes:
+      label: 'Which component of Gland is affected?'
+      multiple: true
+      options:
+        - 'Core'
+        - 'Event System'
+        - 'Wildcard Events'
+        - 'Event Routing'
+        - 'Configuration'
+        - 'Types'
+        - 'Documentation'
+        - 'Other'
+
+  - type: input
+    validations:
+      required: true
+    attributes:
+      label: 'Gland Version'
+      description: 'What version of Gland are you using?'
+      placeholder: 'e.g., 1.0.0'
+
+  - type: textarea
+    attributes:
+      label: 'Error Messages'
+      description: 'Include any error messages or stack traces related to the issue'
+      value: |
+        ```
+        Paste error messages here
+        ```
+
+  - type: textarea
+    attributes:
+      label: 'Additional Context'
+      description: 'Add any other context about the problem here'

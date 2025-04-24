@@ -1,0 +1,48 @@
+{
+  "name": "@glandjs/emitter",
+  "version": "1.0.0-alpha",
+  "description": "A fast, zero‑dependency event emitter for building scalable, event‑driven applications.",
+  "type": "module",
+  "module": "dist/index",
+  "homepage": "https://github.com/glandjs/emitter#readme",
+  "author": "Mahdi <bitsgenix@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glandjs/emitter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/glandjs/emitter/issues"
+  },
+  "sideEffects": false,
+  "engines": {
+    "bun": ">=1.0.0",
+    "typescript": ">=5"
+  },
+  "scripts": {
+    "build": "",
+    "lint": "",
+    "typecheck": "",
+    "release": "",
+    "test": "",
+    "test:unit": "",
+    "test:integration": "",
+    "test:stress": "",
+    "test:fuzzing": "",
+    "bench": ""
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "glandjs",
+    "event",
+    "event-emitter",
+    "eds",
+    "typescript",
+    "bun"
+  ],
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}
