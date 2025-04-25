@@ -5,11 +5,22 @@
     "module": "ESNext",
     "moduleDetection": "force",
     "moduleResolution": "bundler",
+    "allowJs": true,
     "strict": true,
-    "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "sourceMap": false,
+
+    "useUnknownInCatchVariables": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "noImplicitReturns": true,
+
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": false,
     "noUnusedLocals": false,
@@ -19,6 +30,6 @@
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true
   },
-  "include": ["src/*.ts", "tests/*.ts"],
+  "include": ["src/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
