@@ -9,7 +9,7 @@ emitter.on('user:*', (data) => {
   console.log(`User event occurred: ${data.type}`)
 })
 
-emitter.on('data:*:changed', (data) => {
+emitter.on('data:*', (data) => {
   console.log(`Data changed: ${data.entity} (${data.id})`)
 })
 

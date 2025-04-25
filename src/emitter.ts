@@ -1,269 +1,397 @@
-export interface EventEmitterOptions {
-  /** Event delimiter (default: ':') */
-  delimiter?: string
-  /** Maximum listeners per event (default: 10) */
-  maxListeners?: number
-  /** Log warnings for potential memory leaks (default: false) */
-  verboseMemoryLeak?: boolean
-}
-
-export interface EventOptions {
-  /** Whether to handle events asynchronously */
-  async: boolean
-  /** Timeout for async operations (ms) */
-  timeout?: number
+export interface EmitterOptions {
+  delimiter?: string // Event delimiter (default: ':')
+  maxListeners?: number // Maximum listeners per event (default: 10)
+  warn?: boolean // Log warnings for memory leaks (default: false)
 }
 
 type Listener = (payload: any) => void
 
+interface ListenerNode {
+  fn: Listener
+  next: number
+  pattern?: string
+}
+
+interface RadixNode {
+  listeners: number
+  listenerCount: number
+  children: number[]
+  wildcard: number
+  isEnd: boolean
+}
+
 export class EventEmitter<
-  EM extends Record<string, any> = Record<string, any>
+  Events extends Record<string, any> = Record<string, any>
 > {
-  private readonly _delimiter: string
-  private readonly _maxListeners: number
-  private readonly _verboseMemoryLeak: boolean
+  private readonly _d: string // Delimiter
+  private readonly _m: number // Max listeners
+  private readonly _w: boolean // Warn on memory leak
 
-  private _events: Record<string, Listener[]> = Object.create(null)
-  private _wildcardEvents: Record<string, Array<[string, Listener]>> =
-    Object.create(null)
+  //
+  private _root = this._createNode()
+  private _nodes: RadixNode[] = [this._root]
+  private _listeners: ListenerNode[] = []
+  private _free: number = -1
 
-  private _patternCache: Record<string, Record<string, boolean>> =
-    Object.create(null)
+  private _cache = new Map<string, number[]>()
+  private _cacheHits = new Map<string, number>()
 
-  constructor(options?: EventEmitterOptions) {
-    this._delimiter = options?.delimiter ?? ':'
-    this._maxListeners = options?.maxListeners ?? 10
-    this._verboseMemoryLeak = options?.verboseMemoryLeak ?? false
+  constructor(options?: EmitterOptions) {
+    this._d = options?.delimiter ?? ':'
+    this._m = options?.maxListeners ?? 10
+    this._w = options?.warn ?? false
   }
 
-  public on<E extends keyof EM & string>(
-    event: E,
-    listener: (payload: EM[E]) => void
-  ): this
-  public on<E extends keyof EM & string>(
-    event: E,
-    listener: (payload: EM[E]) => void,
-    options: EventOptions
-  ): Promise<this>
-  public on<E extends keyof EM & string>(
-    event: E,
-    listener: (payload: EM[E]) => void,
-    options?: EventOptions
-  ): this | Promise<this> {
-    if (options?.async) {
-      return Promise.resolve().then(() => this._addListener(event, listener))
+  private _createNode(): RadixNode {
+    return {
+      listeners: -1,
+      listenerCount: 0,
+      children: [],
+      wildcard: -1,
+      isEnd: false,
     }
+  }
 
+  public on<E extends keyof Events & string>(
+    event: E,
+    listener: (payload: Events[E]) => void
+  ): this {
     return this._addListener(event, listener)
   }
 
-  public off<E extends keyof EM & string>(
+  private _addListener<E extends keyof Events & string>(
     event: E,
-    listener?: (payload: EM[E]) => void
+    listener: (payload: Events[E]) => void
   ): this {
-    const eventName = event as string
+    const path = String(event)
+    this._cache.delete(path)
 
-    if (eventName.includes('*')) {
-      const pattern = eventName
-      const wildcardKey = this._getWildcardKey(pattern)
+    const listenerNode: ListenerNode = {
+      fn: listener as Listener,
+      next: -1,
+    }
 
-      const listeners = this._wildcardEvents[wildcardKey]
-      if (!listeners) return this
+    let idx: number
+    if (this._free !== -1) {
+      idx = this._free
+      this._free = this._listeners[idx].next
+      this._listeners[idx] = listenerNode
+    } else {
+      idx = this._listeners.push(listenerNode) - 1
+    }
 
-      if (!listener) {
-        delete this._wildcardEvents[wildcardKey]
-      } else {
-        const idx = listeners.findIndex(
-          ([p, l]) => p === pattern && l === listener
-        )
-        if (idx !== -1) {
-          listeners.splice(idx, 1)
-          if (listeners.length === 0) {
-            delete this._wildcardEvents[wildcardKey]
-          }
-        }
-      }
-
-      this._patternCache = Object.create(null)
-
+    if (path.includes('*')) {
+      listenerNode.pattern = path
+      this._addWildcardListener(path, idx)
       return this
     }
 
-    const eventListeners = this._events[eventName]
-    if (!eventListeners) return this
+    const parts = path.split(this._d)
+    let node = this._root
 
-    if (!listener) {
-      delete this._events[eventName]
-    } else {
-      const idx = eventListeners.indexOf(listener)
-      if (idx !== -1) {
-        eventListeners.splice(idx, 1)
-        if (eventListeners.length === 0) {
-          delete this._events[eventName]
-        }
-      }
-    }
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]
+      const isLast = i === parts.length - 1
 
-    return this
-  }
-
-  public emit<E extends keyof EM & string>(event: E, payload: EM[E]): this
-  public emit<E extends keyof EM & string>(
-    event: E,
-    payload: EM[E],
-    options: EventOptions
-  ): Promise<this>
-  public emit<E extends keyof EM & string>(
-    event: E,
-    payload: EM[E],
-    options?: EventOptions
-  ): this | Promise<this> {
-    const eventName = event as string
-
-    if (options?.async) {
-      return new Promise((resolve, reject) => {
-        const timeoutId = options.timeout
-          ? setTimeout(
-              () => reject(new Error(`Event emission timeout: ${eventName}`)),
-              options.timeout
-            )
-          : null
-
-        Promise.resolve().then(() => {
-          try {
-            this._emitEvent(eventName, payload)
-            if (timeoutId) clearTimeout(timeoutId)
-            resolve(this)
-          } catch (error) {
-            if (timeoutId) clearTimeout(timeoutId)
-            reject(error)
-          }
-        })
-      })
-    }
-
-    this._emitEvent(eventName, payload)
-    return this
-  }
-
-  private _addListener<E extends keyof EM & string>(
-    event: E,
-    listener: (payload: EM[E]) => void
-  ): this {
-    const eventName = event as string
-
-    if (eventName.includes('*')) {
-      const pattern = eventName
-      const wildcardKey = this._getWildcardKey(pattern)
-
-      if (!this._wildcardEvents[wildcardKey]) {
-        this._wildcardEvents[wildcardKey] = []
+      let childIdx = node.children[part.charCodeAt(0)]
+      if (childIdx === undefined) {
+        childIdx = this._nodes.push(this._createNode()) - 1
+        node.children[part.charCodeAt(0)] = childIdx
       }
 
-      const listeners = this._wildcardEvents[wildcardKey]
+      node = this._nodes[childIdx]
 
-      if (this._maxListeners > 0 && listeners.length >= this._maxListeners) {
-        if (this._verboseMemoryLeak) {
+      if (isLast) {
+        node.isEnd = true
+
+        if (this._m > 0 && node.listenerCount >= this._m && this._w) {
           console.warn(
-            `MaxListenersExceededWarning: Possible memory leak detected. ${listeners.length} listeners added for wildcard pattern '${pattern}'`
+            `MaxListenersExceededWarning: ${node.listenerCount} listeners for '${path}'`
           )
         }
-      }
 
-      listeners.push([pattern, listener as Listener])
-      return this
-    }
-
-    if (!this._events[eventName]) {
-      this._events[eventName] = []
-    }
-
-    const listeners = this._events[eventName]
-
-    if (this._maxListeners > 0 && listeners.length >= this._maxListeners) {
-      if (this._verboseMemoryLeak) {
-        console.warn(
-          `MaxListenersExceededWarning: Possible memory leak detected. ${listeners.length} listeners added for event '${eventName}'`
-        )
+        listenerNode.next = node.listeners
+        node.listeners = idx
+        node.listenerCount++
       }
     }
 
-    listeners.push(listener as Listener)
     return this
   }
 
-  private _emitEvent(eventName: string, payload: any): void {
-    const directListeners = this._events[eventName]
-    if (directListeners) {
-      const listeners = directListeners.slice()
+  private _addWildcardListener(pattern: string, listenerIdx: number): void {
+    const parts = pattern.split(this._d)
+    let node = this._root
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]
+      if (part === '*') {
+        if (node.wildcard === -1) {
+          node.wildcard = this._nodes.push(this._createNode()) - 1
+        }
+        node = this._nodes[node.wildcard]
+      } else {
+        let childIdx = node.children[part.charCodeAt(0)]
+        if (childIdx === undefined) {
+          childIdx = this._nodes.push(this._createNode()) - 1
+          node.children[part.charCodeAt(0)] = childIdx
+        }
+        node = this._nodes[childIdx]
+      }
+
+      if (i === parts.length - 1) {
+        const listenerNode = this._listeners[listenerIdx]
+        listenerNode.next = node.listeners
+        node.listeners = listenerIdx
+        node.listenerCount++
+        node.isEnd = true
+      }
+    }
+  }
+
+  public off<E extends keyof Events & string>(
+    event: E,
+    listener?: (payload: Events[E]) => void
+  ): this {
+    const path = String(event)
+    this._cache.delete(path)
+
+    if (path.includes('*')) {
+      return this._removeWildcardListener(path, listener as Listener)
+    }
+
+    const parts = path.split(this._d)
+    let node = this._root
+    const nodeStack = [0]
+
+    for (const part of parts) {
+      const childIdx = node.children[part.charCodeAt(0)]
+      if (childIdx === undefined) return this
+
+      nodeStack.push(childIdx)
+      node = this._nodes[childIdx]
+    }
+
+    if (!node.isEnd) return this
+
+    if (listener) {
+      let prevIdx = -1
+      let currIdx = node.listeners
+
+      while (currIdx !== -1) {
+        const curr = this._listeners[currIdx]
+
+        if (curr.fn === listener) {
+          if (prevIdx === -1) {
+            node.listeners = curr.next
+          } else {
+            this._listeners[prevIdx].next = curr.next
+          }
+
+          curr.next = this._free
+          this._free = currIdx
+          node.listenerCount--
+          break
+        }
+
+        prevIdx = currIdx
+        currIdx = curr.next
+      }
+    } else {
+      let currIdx = node.listeners
+
+      while (currIdx !== -1) {
+        const next = this._listeners[currIdx].next
+        this._listeners[currIdx].next = this._free
+        this._free = currIdx
+        currIdx = next
+      }
+
+      node.listeners = -1
+      node.listenerCount = 0
+      node.isEnd = false
+    }
+
+    return this
+  }
+
+  private _removeWildcardListener(pattern: string, listener?: Listener): this {
+    const parts = pattern.split(this._d)
+    let node = this._root
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]
+      if (part === '*') {
+        if (node.wildcard === -1) return this
+        node = this._nodes[node.wildcard]
+      } else {
+        const childIdx = node.children[part.charCodeAt(0)]
+        if (childIdx === undefined) return this
+        node = this._nodes[childIdx]
+      }
+    }
+
+    if (!node.isEnd) return this
+
+    let prevIdx = -1
+    let currIdx = node.listeners
+
+    while (currIdx !== -1) {
+      const curr = this._listeners[currIdx]
+      const next = curr.next
+
+      if (!listener || curr.fn === listener) {
+        if (prevIdx === -1) {
+          node.listeners = next
+        } else {
+          this._listeners[prevIdx].next = next
+        }
+
+        curr.next = this._free
+        this._free = currIdx
+        node.listenerCount--
+
+        if (listener) break
+      } else {
+        prevIdx = currIdx
+      }
+
+      currIdx = next
+    }
+
+    return this
+  }
+
+  public emit<E extends keyof Events & string>(
+    event: E,
+    payload: Events[E]
+  ): this {
+    this._emit(String(event), payload)
+    return this
+  }
+
+  private _emit(path: string, payload: any): void {
+    let listeners = this._cache.get(path)
+
+    if (listeners) {
+      const hits = (this._cacheHits.get(path) || 0) + 1
+      this._cacheHits.set(path, hits)
+
       for (let i = 0; i < listeners.length; i++) {
         try {
-          listeners[i](payload)
+          this._listeners[listeners[i]].fn(payload)
         } catch (error) {
           console.error('Error in event listener:', error)
         }
       }
+      return
     }
 
-    const wildcardKeys = Object.keys(this._wildcardEvents)
-    if (wildcardKeys.length === 0) return
+    const collectListeners: number[] = []
+    const parts = path.split(this._d)
 
-    for (let i = 0; i < wildcardKeys.length; i++) {
-      const key = wildcardKeys[i]
-      const wildcardListeners = this._wildcardEvents[key]
+    this._matchExact(this._root, parts, 0, collectListeners)
 
-      for (let j = 0; j < wildcardListeners.length; j++) {
-        const [pattern, listener] = wildcardListeners[j]
+    this._matchWildcard(this._root, path, parts, 0, collectListeners)
 
-        if (this._matchPattern(pattern, eventName)) {
-          try {
-            listener(payload)
-          } catch (error) {
-            console.error('Error in wildcard event listener:', error)
-          }
+    for (let i = 0; i < collectListeners.length; i++) {
+      try {
+        this._listeners[collectListeners[i]].fn(payload)
+      } catch (error) {
+        console.error('Error in event listener:', error)
+      }
+    }
+
+    const hits = this._cacheHits.get(path) || 0
+    this._cacheHits.set(path, hits + 1)
+
+    if (hits > 3 && collectListeners.length > 0) {
+      this._cache.set(path, collectListeners.slice())
+    }
+  }
+
+  private _matchExact(
+    node: RadixNode,
+    parts: string[],
+    depth: number,
+    results: number[]
+  ): void {
+    if (depth === parts.length) {
+      if (node.isEnd) {
+        let idx = node.listeners
+        while (idx !== -1) {
+          results.push(idx)
+          idx = this._listeners[idx].next
         }
       }
+      return
+    }
+
+    const part = parts[depth]
+    const childIdx = node.children[part.charCodeAt(0)]
+
+    if (childIdx !== undefined) {
+      this._matchExact(this._nodes[childIdx], parts, depth + 1, results)
     }
   }
 
-  private _getWildcardKey(pattern: string): string {
-    return pattern
-      .split(this._delimiter)
-      .map((part) => (part === '*' ? '*' : '#'))
-      .join(this._delimiter)
+  private _matchWildcard(
+    node: RadixNode,
+    fullPath: string,
+    parts: string[],
+    depth: number,
+    results: number[]
+  ): void {
+    if (node.wildcard !== -1) {
+      const wildcardNode = this._nodes[node.wildcard]
+      if (wildcardNode.isEnd) {
+        let idx = wildcardNode.listeners
+        while (idx !== -1) {
+          const listener = this._listeners[idx]
+          const pattern = listener.pattern
+
+          if (pattern && this._matchPattern(pattern, fullPath)) {
+            results.push(idx)
+          }
+
+          idx = listener.next
+        }
+      }
+
+      if (depth < parts.length) {
+        this._matchWildcard(wildcardNode, fullPath, parts, depth + 1, results)
+      }
+    }
+
+    if (depth < parts.length) {
+      const part = parts[depth]
+      const childIdx = node.children[part.charCodeAt(0)]
+
+      if (childIdx !== undefined) {
+        this._matchWildcard(
+          this._nodes[childIdx],
+          fullPath,
+          parts,
+          depth + 1,
+          results
+        )
+      }
+    }
   }
 
-  private _matchPattern(pattern: string, eventName: string): boolean {
-    const patternCache =
-      this._patternCache[pattern] || (this._patternCache[pattern] = {})
+  private _matchPattern(pattern: string, path: string): boolean {
+    const patternParts = pattern.split(this._d)
+    const pathParts = path.split(this._d)
 
-    if (patternCache[eventName] !== undefined) {
-      return patternCache[eventName]
-    }
-
-    const patternParts = pattern.split(this._delimiter)
-    const eventParts = eventName.split(this._delimiter)
-
-    if (patternParts.length !== eventParts.length && !pattern.includes('*')) {
-      patternCache[eventName] = false
-      return false
-    }
+    if (patternParts.length !== pathParts.length) return false
 
     for (let i = 0; i < patternParts.length; i++) {
-      const patternPart = patternParts[i]
-      const eventPart = eventParts[i]
+      const pp = patternParts[i]
+      const ep = pathParts[i]
 
-      if (patternPart === '*') {
-        continue
-      }
-
-      if (!eventPart || patternPart !== eventPart) {
-        patternCache[eventName] = false
-        return false
-      }
+      if (pp !== '*' && pp !== ep) return false
     }
 
-    patternCache[eventName] = true
     return true
   }
 }
