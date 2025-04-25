@@ -12,6 +12,9 @@
     "type": "git",
     "url": "https://github.com/glandjs/emitter.git"
   },
+  "files": [
+    "dist/"
+  ],
   "bugs": {
     "url": "https://github.com/glandjs/emitter/issues"
   },
@@ -24,9 +27,8 @@
     "build:js": "bun build src/index.ts --outdir dist --format esm --target bun --minify",
     "build:types": "tsc --emitDeclarationOnly",
     "build": "npm run build:js && npm run build:types",
-    "lint": "",
-    "typecheck": "",
-    "release": "",
+    "release": "npm publish",
+    "release:test": "npm pack",
     "test": "bun test ./tests/*",
     "test:integration": "bun test ./tests/emitter.integration.ts",
     "bench": "bun bench/benchmark.ts"

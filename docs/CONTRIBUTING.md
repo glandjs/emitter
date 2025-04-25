@@ -1,12 +1,12 @@
-# Contributing to @glandjs/events
+# Contributing to @glandjs/emitter
 
-Thank you for your interest in contributing to **@glandjs/events**! This package is the core event broker used by Gland and is designed to be fast, lightweight, and dependency‑free. Your contributions help us improve performance, add new features, and ensure reliability.
+Thank you for your interest in contributing to **@glandjs/emitter**! This package provides a fast, minimal, and zero-dependency EventEmitter designed for scalable and event-driven applications. Your contributions help improve performance, flexibility, and reliability of the emitter core.
 
 ---
 
 ## Table of Contents
 
-- [Contributing to @glandjs/events](#contributing-to-glandjsevents)
+- [Contributing to @glandjs/emitter](#contributing-to-glandjsemitter)
   - [Table of Contents](#table-of-contents)
   - [Code of Conduct](#code-of-conduct)
   - [Getting Started](#getting-started)
@@ -24,7 +24,7 @@ Thank you for your interest in contributing to **@glandjs/events**! This package
 
 ## Code of Conduct
 
-This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/). Please ensure you read and follow the [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
+This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/). Please make sure to read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 ---
 
@@ -32,20 +32,20 @@ This project adheres to the [Contributor Covenant](https://www.contributor-coven
 
 ### Prerequisites
 
-- **Node.js** v14 or higher
-- **Git** for version control
-- **TypeScript** knowledge (project is written in TS)
+- [**Bun**](https://bun.sh) v1.0 or higher
+- [**Git**](https://git-scm.com/) for version control
+- Familiarity with **TypeScript** (the codebase is fully typed)
 
 ### Installation
 
-1. Clone the repo:
+1. Clone the repository:
    ```bash
-   git clone https://github.com/glandjs/events.git
-   cd events
+   git clone https://github.com/glandjs/emitter.git
+   cd emitter
    ```
 2. Install dependencies:
    ```bash
-   npm install
+   bun install
    ```
 
 ---
@@ -54,77 +54,81 @@ This project adheres to the [Contributor Covenant](https://www.contributor-coven
 
 If you find a bug or unexpected behavior:
 
-1. Search existing issues to avoid duplicates.
-2. Open a new issue with:
+1. Check existing issues to avoid duplication.
+2. Open a new issue and include:
    - A clear title and description
-   - Steps to reproduce
+   - Steps to reproduce the issue
    - Expected vs. actual behavior
-   - Environment details (Node.js version, OS, etc.)
-
-_Note:_ For general questions, use [Stack Overflow](https://stackoverflow.com) with the `glandjs` tag.
+   - Environment details (OS, Bun version, etc.)
 
 ---
 
 ## Feature Requests
 
-1. Open an issue describing the feature and its use case.
-2. Discuss on the issue thread to refine the proposal.
-3. If approved, implement it in a PR following the guidelines below.
+To suggest a new feature:
+
+1. Create an issue with the `feature` label.
+2. Explain the feature's purpose and use case.
+3. Discuss it with maintainers and the community.
+4. Once approved, you may start implementation via a Pull Request.
 
 ---
 
 ## Submitting Pull Requests
 
-1. Fork the repository and create a branch:
+1. Fork the repo and create a branch:
    ```bash
-   git checkout -b feat/your-feature
+   git checkout -b feat/your-feature-name
    ```
-2. Make your changes in code and tests.
-3. Run all tests and ensure they pass:
+2. Make your changes in `src/` and update/add tests in `tests/`.
+3. Run tests:
    ```bash
-   npm test
+   bun test
    ```
-4. Commit your changes with a clear message (see [Commit Message Format](#commit-message-format)).
-5. Push your branch and open a PR against `main`.
+4. Run benchmarks (if needed):
+   ```bash
+   bun bench/benchmark.ts
+   ```
+5. Commit with a clear message (see [Commit Message Format](#commit-message-format))
+6. Push and open a Pull Request against `main`
 
-_PR Checklist:_
+**Pull Request Checklist:**
 
-- Tests for new behavior
-- Linting passes (`npm run lint`)
-- Documentation updated if needed
-- Code aligns with event-driven design
+- [ ] Tests written for new features or bug fixes
+- [ ] Linting and type-checking pass
+- [ ] Benchmark impact considered (for perf-related changes)
+- [ ] No external dependencies introduced
 
 ---
 
 ## Development Setup
 
-- **Build:** `npm run build`
-- **Lint:** `npm run lint`
-- **Test:** `npm test`
-- **Type-check:** `npm run typecheck`
+- **Build:** `bun run build`
+- **Test:** `bun test`
+- **Benchmark:** `bun bench/benchmark.ts`
+- **Run example:** `bun examples/*.ts`
 
 ---
 
 ## Coding Guidelines
 
-- **Event-Driven First**: Ensure any new API or feature respects EDS principles.
-- **Performance**: Keep overhead minimal and avoid blocking operations.
-- **No External Dependencies**: The package must remain dependency-free.
-- **TypeScript**: Fully typed, no `any` unless absolutely necessary.
-- **Tests**: Cover edge cases and error scenarios.
+- **Zero Dependencies**: Avoid adding any external libraries.
+- **Performance First**: Every operation should aim for O(1) or O(log n) complexity.
+- **Wildcard Matching**: Must be accurate and fast (consider radix trees or optimized trie structures).
+- **Strict TypeScript**: Fully typed, no `any` unless absolutely unavoidable.
+- **Tests**: All edge cases and wildcards must be tested.
 
 ---
 
 ## Commit Message Format
 
-Use conventional commits:
+Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
 
 ```
-<type>(<scope>): <short summary>
+<type>(<scope>): <short description>
 
-<body>
-
-<footer>
+[optional body]
+[optional footer]
 ```
 
 **Types:**
@@ -132,19 +136,19 @@ Use conventional commits:
 - `feat`: new feature
 - `fix`: bug fix
 - `perf`: performance improvement
-- `refactor`: code change without feature or fix
-- `test`: adding or updating tests
+- `refactor`: code restructuring
+- `test`: test-related changes
 - `docs`: documentation only
-- `chore`: maintenance tasks
+- `chore`: build or tooling changes
 
 **Example:**
 
 ```
-perf(broker): reduce listener lookup overhead
+feat(emitter): add wildcard support for nested events
 ```
 
 ---
 
 ## Thank You
 
-We appreciate your time and effort! Your contributions help make **@glandjs/events** the best it can be. Happy coding! 🚀
+We appreciate your contributions to **@glandjs/emitter**! Your efforts help make it the most efficient and elegant event system for event-driven JavaScript and TypeScript applications.
