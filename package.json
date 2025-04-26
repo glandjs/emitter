@@ -1,6 +1,6 @@
 {
   "name": "@glandjs/emitter",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0",
   "description": "A fast, zero‑dependency event emitter for building scalable, event‑driven applications.",
   "type": "module",
   "module": "dist/index.js",

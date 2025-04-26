@@ -13,7 +13,8 @@
     "declarationMap": false,
     "emitDeclarationOnly": false,
     "sourceMap": false,
-
+    "noEmitHelpers": true,
+    "importHelpers": true,
     "useUnknownInCatchVariables": true,
     "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
