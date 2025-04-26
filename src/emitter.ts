@@ -325,16 +325,12 @@ export class EventEmitter<
     }
   }
 
-  // This is the key change - using a different approach for wildcard matching
   private _matchWildcardPatterns(path: string, results: number[]): void {
-    // Find all listener nodes with patterns
     for (let i = 0; i < this._listeners.length; i++) {
       const listener = this._listeners[i]
 
-      // Skip empty slots and listeners without patterns
       if (!listener || !listener.pattern) continue
 
-      // Check if the pattern matches the path
       if (this._matchPattern(listener.pattern, path)) {
         results.push(i)
       }
