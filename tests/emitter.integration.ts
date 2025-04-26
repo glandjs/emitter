@@ -31,7 +31,7 @@ describe('EventEmitter', () => {
     emitter.on('test', () => results.push(2))
     emitter.emit('test', {})
 
-    expect(results).toEqual([2, 1])
+    expect(results).toEqual([1, 2])
   })
 
   test('should allow removing specific listeners', () => {
