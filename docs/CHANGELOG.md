@@ -32,3 +32,40 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) an
 - Zero dependencies with minimal bundle size (0.77 KB minified)
 - Designed for both Gland internal usage and standalone applications
 - Fully tested
+
+## [1.1.0] – 2025-04-26
+
+### Added
+
+- **Tree-based internal storage**
+  Events are now organized in a nested tree under the emitter’s `t` property, reflecting hierarchical namespaces (e.g. `user:login` → `t.user.login`) and enabling faster lookup for deeply namespaced events.
+- **Hot-path LRU cache**
+  By default the emitter now keeps a small, fixed-size cache (`c`) of the 6 most-frequently-used events, with a true LRU eviction policy. Each cache entry tracks:
+  - `f`: array of listener functions
+  - `t`: total times this event has been emitted
+- **Introspectable state dump**
+  Logging the emitter instance now prints its full internal shape:
+  ```js
+  {
+    t: { … },    // tree of all registered listeners
+    c: { … },    // hot-path cache entries
+    i: 2,        // next listener ID
+    m: 6,        // cache capacity
+    d: ":",      // delimiter
+    on, off, emit
+  }
+  ```
+
+### Changed
+
+- **Bundle size** increased from ~0.77 KB (minified) to ~1.2 KB to accommodate the new tree structure and LRU cache.
+- Internal fields renamed for clarity:
+  - `t` (tree root)
+  - `c` (cache map)
+  - `i` (next ID counter)
+  - `m` (cache max size)
+
+### Performance
+
+- **Fast path** for hot events: emits for cached events bypass full tree traversal, reducing overhead for your most common events.
+- Maintains O(1) amortized operations for `.on()`, `.off()` and `.emit()` even with the tree and cache.
