@@ -69,3 +69,11 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) an
 
 - **Fast path** for hot events: emits for cached events bypass full tree traversal, reducing overhead for your most common events.
 - Maintains O(1) amortized operations for `.on()`, `.off()` and `.emit()` even with the tree and cache.
+
+## [1.1.1] – 2025-04-27
+
+### Changed
+
+- No functional changes.
+- Improved code readability with better variable names and added inline comments.
+- Refactored for clearer structure without modifying core logic.
