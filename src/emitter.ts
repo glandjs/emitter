@@ -18,7 +18,7 @@ export class EventEmitter<T = Record<string, any>> {
       }
     }
 
-    this.cache = {}; // Clear cache
+    this.cache = {};
     return this;
   }
 

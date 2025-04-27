@@ -1,28 +1,28 @@
-import { EventEmitter } from '../dist'
+import { EventEmitter } from '../dist';
 
-console.log('\n=== High-Frequency Events Example ===')
+console.log('\n=== High-Frequency Events Example ===');
 
-const emitter = new EventEmitter()
+const emitter = new EventEmitter();
 
-let messageCount = 0
-let errorCount = 0
-let totalBytes = 0
+let messageCount = 0;
+let errorCount = 0;
+let totalBytes = 0;
 
 // Register listeners for metrics
 emitter.on('net:packet:received', (data) => {
-  messageCount++
-  totalBytes += data.size
-})
+  messageCount++;
+  totalBytes += data.size;
+});
 
 emitter.on('net:packet:error', (data) => {
-  errorCount++
-})
+  errorCount++;
+});
 
-console.log('Simulating high-frequency network traffic...')
+console.log('Simulating high-frequency network traffic...');
 
 // Simulate high-frequency events
-const startTime = Date.now()
-const eventCount = 100000
+const startTime = Date.now();
+const eventCount = 100000;
 
 for (let i = 0; i < eventCount; i++) {
   // Simulate 98% success, 2% error rate
@@ -31,20 +31,20 @@ for (let i = 0; i < eventCount; i++) {
       id: `pkt-${i}`,
       size: Math.floor(Math.random() * 1024),
       timestamp: Date.now(),
-    })
+    });
   } else {
     emitter.emit('net:packet:error', {
       id: `pkt-${i}`,
       error: 'Checksum mismatch',
       timestamp: Date.now(),
-    })
+    });
   }
 }
 
-const duration = Date.now() - startTime
+const duration = Date.now() - startTime;
 
-console.log(`Processed ${eventCount} events in ${duration}ms`)
-console.log(`Message count: ${messageCount}`)
-console.log(`Error count: ${errorCount}`)
-console.log(`Total bytes received: ${totalBytes}`)
-console.log(`Events per second: ${Math.floor(eventCount / (duration / 1000))}`)
+console.log(`Processed ${eventCount} events in ${duration}ms`);
+console.log(`Message count: ${messageCount}`);
+console.log(`Error count: ${errorCount}`);
+console.log(`Total bytes received: ${totalBytes}`);
+console.log(`Events per second: ${Math.floor(eventCount / (duration / 1000))}`);
