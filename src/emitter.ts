@@ -1,104 +1,137 @@
 export class EventEmitter<T = Record<string, any>> {
-  private t = {}
-  private c = {}
-  private i = 0
-  private m = 6
-  private d = ':'
-  constructor(d?: string, m = 6) {
-    if (d) this.d = d
-    if (m > 0) this.m = m
-  }
-  public on<K extends keyof T & string>(e: K, f: (p: T[K]) => void) {
-    let n = this.t,
-      p = e.split(this.d)
-    for (let i = 0, l = p.length; i < l; i++) {
-      const k = p[i]
-      n[k] = n[k] || (i === l - 1 ? [] : {})
-      if (i === l - 1) n[k].push(f)
-      else n = n[k]
+  private tree = {};
+  private cache = {};
+  private id = 0;
+  constructor(private spliter: string = ':', private maxCacheSize = 6) {}
+
+  public on<K extends keyof T & string>(event: K, listener: (payload: T[K]) => void) {
+    let node = this.tree;
+    const parts = event.split(this.spliter);
+
+    for (let i = 0, len = parts.length; i < len; i++) {
+      const part = parts[i]!;
+      node[part] = node[part] || (i === len - 1 ? [] : {});
+      if (i === len - 1) {
+        node[part].push(listener);
+      } else {
+        node = node[part];
+      }
     }
-    this.c = {}
-    return this
+
+    this.cache = {}; // Clear cache
+    return this;
   }
-  public off<K extends keyof T & string>(e: K, f?: (p: T[K]) => void) {
-    const p = e.split(this.d)
-    let n = this.t,
-      s = [{ n, k: p[0] }],
-      d = false
-    for (let i = 0, l = p.length; i < l; i++) {
-      const k = p[i]
-      if (!n[k]) return this
-      if (i === l - 1) {
-        if (!f) {
-          delete n[k]
-          d = true
+
+  public off<K extends keyof T & string>(event: K, listener?: (payload: T[K]) => void) {
+    const parts = event.split(this.spliter);
+    let node = this.tree;
+    const stack = [{ node, key: parts[0] }];
+    let shouldCleanup = false;
+
+    for (let i = 0, len = parts.length; i < len; i++) {
+      const part = parts[i]!;
+      if (!node[part]) return this;
+
+      if (i === len - 1) {
+        if (!listener) {
+          delete node[part];
+          shouldCleanup = true;
         } else {
-          const a = n[k]
-          const j = a.indexOf(f)
-          if (j >= 0) {
-            a.splice(j, 1)
-            if (!a.length) {
-              delete n[k]
-              d = true
+          const listeners = node[part];
+          const index = listeners.indexOf(listener);
+          if (index >= 0) {
+            listeners.splice(index, 1);
+            if (!listeners.length) {
+              delete node[part];
+              shouldCleanup = true;
             }
           }
         }
       } else {
-        n = n[k]
-        if (i < l - 1) s.push({ n, k: p[i + 1] })
+        node = node[part];
+        if (i < len - 1) stack.push({ node, key: parts[i + 1] });
       }
     }
-    if (d)
-      for (let i = s.length - 1; i >= 0; i--) {
-        const { n, k } = s[i]
-        if (n[k] && Object.keys(n[k]).length === 0) delete n[k]
+
+    if (shouldCleanup) {
+      for (let i = stack.length - 1; i >= 0; i--) {
+        const { node, key } = stack[i];
+        if (node[key] && Object.keys(node[key]).length === 0) {
+          delete node[key];
+        }
       }
-    this.c = {}
-    return this
+    }
+
+    this.cache = {};
+    return this;
   }
-  public emit<K extends keyof T & string>(e: K, p: T[K]) {
-    const h = this.c[e]
-    if (h) {
-      h.t = ++this.i
-      for (let i = 0, l = h.f.length; i < l; i++) h.f[i](p)
-      return this
+
+  public emit<K extends keyof T & string>(event: K, payload: T[K]) {
+    const cached = this.cache[event];
+    if (cached) {
+      cached.timestamp = ++this.id;
+      for (let i = 0, len = cached.listeners.length; i < len; i++) {
+        cached.listeners[i](payload);
+      }
+      return this;
     }
-    const r = [],
-      s = e.split(this.d)
-    this._f(this.t, s, 0, r)
-    if (r.length) {
-      this.c[e] = { f: r, t: ++this.i }
-      const k = Object.keys(this.c)
-      if (k.length > this.m) {
-        let o = k[0],
-          m = this.c[o].t
-        for (let i = 1, l = k.length; i < l; i++) {
-          if (this.c[k[i]].t < m) {
-            m = this.c[k[i]].t
-            o = k[i]
+
+    const listeners: Function[] = [];
+    const parts = event.split(this.spliter);
+    this.findListeners(this.tree, parts, 0, listeners);
+
+    if (listeners.length) {
+      this.cache[event] = { listeners, timestamp: ++this.id };
+
+      const keys = Object.keys(this.cache);
+      if (keys.length > this.maxCacheSize) {
+        // Evict the oldest cache entry
+        let oldestKey = keys[0];
+        let oldestTimestamp = this.cache[oldestKey].timestamp;
+        for (let i = 1, len = keys.length; i < len; i++) {
+          const key = keys[i];
+          if (this.cache[key].timestamp < oldestTimestamp) {
+            oldestKey = key;
+            oldestTimestamp = this.cache[key].timestamp;
           }
         }
-        delete this.c[o]
+        delete this.cache[oldestKey];
       }
-      for (let i = 0, l = r.length; i < l; i++) r[i](p)
+
+      for (let i = 0, len = listeners.length; i < len; i++) {
+        listeners[i](payload);
+      }
     }
-    return this
+
+    return this;
   }
-  private _f(n: any, p: string[], d: number, r: Function[]) {
-    if (d === p.length) {
-      if (Array.isArray(n)) r.push(...n)
-      return
+
+  private findListeners(node: any, parts: string[], depth: number, listeners: Function[]) {
+    if (depth === parts.length) {
+      if (Array.isArray(node)) {
+        listeners.push(...node);
+      }
+      return;
     }
-    const k = p[d],
-      x = n[k]
-    if (x) {
-      if (d === p.length - 1 && Array.isArray(x)) r.push(...x)
-      else if (typeof x === 'object') this._f(x, p, d + 1, r)
+
+    const part = parts[depth];
+    const nextNode = node[part];
+
+    if (nextNode) {
+      if (depth === parts.length - 1 && Array.isArray(nextNode)) {
+        listeners.push(...nextNode);
+      } else if (typeof nextNode === 'object') {
+        this.findListeners(nextNode, parts, depth + 1, listeners);
+      }
     }
-    const w = n['*']
-    if (w) {
-      if (d === p.length - 1 && Array.isArray(w)) r.push(...w)
-      else if (typeof w === 'object') this._f(w, p, d + 1, r)
+
+    const wildcardNode = node['*'];
+    if (wildcardNode) {
+      if (depth === parts.length - 1 && Array.isArray(wildcardNode)) {
+        listeners.push(...wildcardNode);
+      } else if (typeof wildcardNode === 'object') {
+        this.findListeners(wildcardNode, parts, depth + 1, listeners);
+      }
     }
   }
 }
