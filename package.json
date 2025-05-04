@@ -1,10 +1,7 @@
 {
   "name": "@glandjs/emitter",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A fast, zero‑dependency event emitter for building scalable, event‑driven applications.",
-  "type": "module",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
   "homepage": "https://github.com/glandjs/emitter#readme",
   "author": "Mahdi <bitsgenix@gmail.com>",
   "license": "MIT",
@@ -24,9 +21,7 @@
     "typescript": ">=5"
   },
   "scripts": {
-    "build:js": "bun build src/index.ts --outdir dist --format esm --target bun --minify",
-    "build:types": "tsc --emitDeclarationOnly",
-    "build": "npm run build:js && npm run build:types",
+    "build": "tsc",
     "release": "npm publish",
     "release:test": "npm pack",
     "test": "bun test ./tests/*",

@@ -55,9 +55,12 @@ export class EventEmitter<T = Record<string, any>> {
 
     if (shouldCleanup) {
       for (let i = stack.length - 1; i >= 0; i--) {
-        const { node, key } = stack[i];
-        if (node[key] && Object.keys(node[key]).length === 0) {
-          delete node[key];
+        const item = stack[i];
+        if (!item) continue;
+
+        const { node, key } = item!;
+        if (node[key!] && Object.keys(node[key!]).length === 0) {
+          delete node[key!];
         }
       }
     }

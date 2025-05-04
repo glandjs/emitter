@@ -77,3 +77,20 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) an
 - No functional changes.
 - Improved code readability with better variable names and added inline comments.
 - Refactored for clearer structure without modifying core logic.
+
+## [1.1.2] – 2025-05-04
+
+### Changed
+
+- Replaced Bun’s ESM-based build with a TypeScript-only CommonJS (`CJS`) output to improve compatibility with Node.js and CommonJS environments.
+- Removed `bun build` from the build pipeline in favor of standard `tsc` compilation.
+- Updated `tsconfig.json`:
+  - Set `module` to `CommonJS`
+  - Changed `target` to `ES2021`
+  - Removed unused or Bun-specific options (`moduleResolution: bundler`, `verbatimModuleSyntax`, etc.)
+- Removed `"type": "module"` and `"module"` fields from `package.json`.
+- Output still located in `dist/`, includes `.js` and `.d.ts`.
+
+### Note
+
+This release makes the package easier to consume in broader tooling and ecosystem setups (e.g., Jest, Node.js, older bundlers) while maintaining all functionality and TypeScript type support.
