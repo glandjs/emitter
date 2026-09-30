@@ -94,3 +94,53 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) an
 ### Note
 
 This release makes the package easier to consume in broader tooling and ecosystem setups (e.g., Jest, Node.js, older bundlers) while maintaining all functionality and TypeScript type support.
+
+## [1.1.5] – 2026-09-30
+
+### Fixed
+
+- **Tree nodes are now a single shape.** Previously a node was an array for a leaf
+  and an object for a branch, so a segment that was both a leaf and a prefix was
+  represented by an array carrying extra keys. Registering a branch before its
+  leaf threw `TypeError: node[part].push is not a function`, and `off` could prune a
+  subtree that still held live listeners. Every path segment is now a node with its
+  own `listeners` and `children`, which makes registration order irrelevant and
+  keeps `off` from touching siblings.
+- **Event names that exist on `Object.prototype` are safe.** `tree` and `cache` are
+  null-prototype maps, so `on('constructor')`, `on('__proto__')` and
+  `emit('toString')` no longer throw or resolve to inherited members.
+- **Emitting a literal `*` fires once.** `emit('a:*')` matched both the exact
+  subscription and the wildcard branch, invoking each listener twice. A literal `*`
+  segment now matches only the exact branch.
+- **Default cache size raised from 6 to 64.** With more live event names than the
+  cache could hold, LRU eviction forced every emit back to a tree walk. At 10
+  distinct events the default measured ~112K ops/sec against ~3.6M ops/sec at
+  size 64. See the [API reference](./API.md#listener-cache).
+- **Build failure under `tsc`.** `cache` was inferred as `{}`, so indexing it with
+  the generic key failed to compile. `bun run build` exited non-zero and the
+  published `dist/` was left stale. Fresh clones could not run the test suite.
+- **Test script and filename.** `bun test ./tests/*` did not match on Windows
+  shells, and `emitter.integration.ts` did not follow Bun's test file naming
+  convention. The suite now runs via `bun test tests`.
+- **Benchmark methodology.** The measured callback was awaited on every iteration,
+  adding microtask overhead to a synchronous emitter and understating throughput by
+  roughly 6x. The await is removed and a cache-sizing scenario was added so the
+  eviction cliff above stays visible.
+
+### Changed
+
+- `maxCacheSize` defaults to `64` instead of `6`. Pass a smaller value explicitly to
+  restore the previous default.
+- Test coverage extended from 5 to 34 cases, covering hierarchy ordering, wildcard
+  resolution, prototype-chain names, cache invalidation, mutation during emit, and
+  edge cases.
+- The changelog entries for 1.1.0 describe internal fields as `t`, `c`, `i`, `m` and
+  `d`. The current implementation uses `root`, `cache`, `id`, `maxCacheSize` and
+  `splitter`; the 1.1.0 notes are left as historical record.
+
+### Unchanged
+
+- Public API is still `on`, `off`, `emit`.
+- A listener that throws still propagates to the caller of `emit` and skips the
+  remaining listeners, matching Node's `EventEmitter`.
+- Wildcards still match exactly one segment.

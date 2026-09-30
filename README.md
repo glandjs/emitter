@@ -33,17 +33,18 @@ Its purpose is to provide a **lightweight** and **minimalistic** solution for ha
 The design of @glandjs/emitter focuses on simplicity and performance. It’s not a complex event system that introduces unnecessary abstractions or layers; instead, it’s designed to handle **high-volume events** in a system with minimal memory footprint and maximum throughput.
 
 - **Minimalism**: We only expose three methods: `on`, `off`, and `emit`. These three methods cover the entire event handling process. Nothing more is needed.
-- **Event Hierarchy**: Event names use a `:` separator, allowing for a **namespaced** structure (e.g., `user:login`, `system:error`). The emitter efficiently resolves events with hierarchies or wildcards, without sacrificing performance.
+- **Event Hierarchy**: Event names use a `:` separator (configurable), allowing for a **namespaced** structure (e.g., `user:login`, `system:error`). The emitter efficiently resolves events with hierarchies or wildcards, without sacrificing performance.
 - **Decoupling**: Components using this emitter are **completely decoupled**. There is no direct dependency between listeners and emitters. A listener only cares about the event name, not who emits it or how it gets there.
-- **Performance First**: Designed to be **memory efficient** and **fast**. The emitter avoids memory-heavy operations like closures or deep object copying.
+- **Performance First**: Designed to be **memory efficient** and **fast**. Hot events resolve from a small LRU cache instead of walking the tree.
+- **Predictable cleanup**: Removing a listener never disturbs sibling or nested subscriptions, in any registration order.
 
 ## Documentation
 
-For full documentation on how to use **@glandjs/emitter**, check out the following resources:
-
-- [Official Documentation](#)
-- [API Reference](#/api)
+- [API Reference](./docs/API.md) — full method, wildcard, cache, and typing reference
+- [Examples](./examples) — runnable scripts for hierarchy, wildcards, and type-safe events
 - [Contributing Guide](./docs/CONTRIBUTING.md)
+- [Security Policy](./docs/SECURITY.md)
+- [Changelog](./docs/CHANGELOG.md)
 
 ## License
 
