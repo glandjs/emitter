@@ -33,7 +33,7 @@
     "build": "tsc",
     "release": "npm publish",
     "release:test": "npm pack",
-    "test": "bun test ./tests/*",
+    "test": "bun test tests",
     "test:integration": "bun test ./tests/emitter.integration.ts",
     "bench": "bun bench/benchmark.ts"
   },
