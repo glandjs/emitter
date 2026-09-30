@@ -2,9 +2,12 @@
 
 ## Supported Versions
 
-| Version     | Supported |
-| ----------- | --------- |
-| 1.0.0-alpha | No        |
+| Version | Supported |
+| ------- | --------- |
+| 1.1.x   | Yes       |
+| < 1.1   | No        |
+
+Security fixes are applied to the latest `1.1.x` release only.
 
 ## Security Considerations for @glandjs/emitter
 

@@ -1,0 +1,33 @@
+version: 2
+
+updates:
+  # ── GitHub Actions ─────────────────────────────────────────────────────────
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Tehran'
+    commit-message:
+      prefix: 'chore(ci)'
+    labels:
+      - 'dependencies'
+      - 'ci'
+    open-pull-requests-limit: 5
+
+  # ── npm ────────────────────────────────────────────────────────────────────
+  # The package has no runtime dependencies; this only covers the dev toolchain
+  # (typescript, @types/bun) and the release tooling added later.
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Tehran'
+    commit-message:
+      prefix: 'chore(deps)'
+    labels:
+      - 'dependencies'
+    open-pull-requests-limit: 5

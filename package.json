@@ -10,6 +10,7 @@
   "main": "./dist/index.js",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
     }
@@ -31,11 +32,19 @@
   },
   "scripts": {
     "build": "tsc",
-    "release": "npm publish",
-    "release:test": "npm pack",
+    "clean": "rimraf dist",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "bun test tests",
-    "test:integration": "bun test ./tests/emitter.integration.ts",
-    "bench": "bun bench/benchmark.ts"
+    "bench": "bun bench/benchmark.ts",
+    "pack": "npm pack",
+    "verify": "bun run format:check && bun run typecheck && bun run build && bun run test",
+    "prepare": "husky",
+    "version": "changeset version && node scripts/changeset-version.mjs",
+    "release": "npm publish",
+    "release:alpha": "npm publish --tag alpha",
+    "release:beta": "npm publish --tag beta"
   },
   "publishConfig": {
     "access": "public"
@@ -49,7 +58,13 @@
     "bun"
   ],
   "devDependencies": {
+    "@changesets/cli": "^2.28.1",
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
     "@types/bun": "latest",
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
     "typescript": "^5.5.4"
   }
 }

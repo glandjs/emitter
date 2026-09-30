@@ -24,7 +24,7 @@ const report = (results: Result[]) => {
   }
 };
 
-const build = <T,>(Ctor: new (splitter?: string, maxCacheSize?: number) => T, events: string[]) => {
+const build = <T>(Ctor: new (splitter?: string, maxCacheSize?: number) => T, events: string[]) => {
   const emitter = new Ctor();
   for (const event of events) emitter.on(event, () => {});
   return emitter;
@@ -32,10 +32,7 @@ const build = <T,>(Ctor: new (splitter?: string, maxCacheSize?: number) => T, ev
 
 const benchmarkSimpleEmission = (iterations: number) => {
   console.log('\n=== Simple Event Emission Benchmark ===');
-  const results = [
-    measure('GlandEventEmitter', iterations, () => (build1 as any).emit('test', {})),
-    measure('Node.js EventEmitter', iterations, () => (build2 as any).emit('test', {})),
-  ];
+  const results = [measure('GlandEventEmitter', iterations, () => (build1 as any).emit('test', {})), measure('Node.js EventEmitter', iterations, () => (build2 as any).emit('test', {}))];
   report(results);
 };
 const build1 = build(GlandEventEmitter as any, ['test']);

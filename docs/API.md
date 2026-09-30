@@ -28,14 +28,14 @@ import { EventEmitter } from '@glandjs/emitter';
 new EventEmitter<T>(splitter?: string, maxCacheSize?: number)
 ```
 
-| Parameter     | Type     | Default | Description                                                        |
-| ------------- | -------- | ------- | ------------------------------------------------------------------ |
-| `splitter`    | `string` | `':'`   | Character that separates the segments of an event name.            |
-| `maxCacheSize` | `number` | `64`   | How many event names to keep in the hot-path listener cache.      |
+| Parameter      | Type     | Default | Description                                                  |
+| -------------- | -------- | ------- | ------------------------------------------------------------ |
+| `splitter`     | `string` | `':'`   | Character that separates the segments of an event name.      |
+| `maxCacheSize` | `number` | `64`    | How many event names to keep in the hot-path listener cache. |
 
 ```ts
-const emitter = new EventEmitter();          // 'a:b' namespaces, cache of 64
-const dashed = new EventEmitter('-', 128);   // 'a-b' namespaces, cache of 128
+const emitter = new EventEmitter(); // 'a:b' namespaces, cache of 64
+const dashed = new EventEmitter('-', 128); // 'a-b' namespaces, cache of 128
 ```
 
 ---
@@ -62,7 +62,7 @@ Registering the same event is order-independent — a name can be used as a leaf
 
 ```ts
 emitter.on('a:b:c', handlerDeep);
-emitter.on('a:b', handlerLeaf);   // fine, in either order
+emitter.on('a:b', handlerLeaf); // fine, in either order
 ```
 
 ---
@@ -77,8 +77,8 @@ Removes a subscription. With no `listener`, every listener for that event is
 removed.
 
 ```ts
-emitter.off('user:login', handler);  // remove one
-emitter.off('user:login');           // remove all listeners for the event
+emitter.off('user:login', handler); // remove one
+emitter.off('user:login'); // remove all listeners for the event
 ```
 
 Removing a listener only affects that exact event name. Sibling branches are
@@ -89,7 +89,7 @@ emitter.on('a:b', handlerLeaf);
 emitter.on('a:b:c', handlerDeep);
 
 emitter.off('a:b', handlerLeaf);
-emitter.emit('a:b:c', payload);   // handlerDeep still runs
+emitter.emit('a:b:c', payload); // handlerDeep still runs
 ```
 
 If the same function was registered more than once, each `off` call removes one
@@ -128,8 +128,8 @@ emitter does not fire a parent listener for a child event.
 emitter.on('db:query:success', onSuccess);
 emitter.on('db:query:error', onError);
 
-emitter.emit('db:query:success', payload);   // only onSuccess runs
-emitter.emit('db:query', payload);           // nothing runs
+emitter.emit('db:query:success', payload); // only onSuccess runs
+emitter.emit('db:query', payload); // nothing runs
 ```
 
 ---
@@ -139,7 +139,7 @@ emitter.emit('db:query', payload);           // nothing runs
 A `*` segment matches exactly one segment. It can appear at any position.
 
 ```ts
-emitter.on('user:*', onUserEvent);          // user:login, user:logout
+emitter.on('user:*', onUserEvent); // user:login, user:logout
 emitter.on('data:*:changed', onDataChange); // data:user:changed, data:post:changed
 
 emitter.emit('user:login', payload);
@@ -194,8 +194,8 @@ interface Events {
 const emitter = new EventEmitter<Events>();
 
 emitter.on('user:login', (data) => {
-  data.username;   // string
-  data.missing;    // compile error
+  data.username; // string
+  data.missing; // compile error
 });
 
 emitter.emit('user:login', { username: 'alice', timestamp: Date.now() });
@@ -225,7 +225,7 @@ emitter.on('risky', () => {
 });
 emitter.on('risky', () => console.log('never reached'));
 
-emitter.emit('risky', payload);   // throws
+emitter.emit('risky', payload); // throws
 ```
 
 Wrap listener bodies in `try`/`catch` when one listener must not affect the
@@ -240,7 +240,7 @@ Event names are stored in null-prototype maps, so names that also exist on
 `hasOwnProperty` — are safe to use and never reach the prototype chain.
 
 ```ts
-emitter.on('constructor', handler);   // valid
+emitter.on('constructor', handler); // valid
 emitter.emit('constructor', payload); // calls handler
 ```
 
