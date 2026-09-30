@@ -1,0 +1,7 @@
+name: emitter
+description: A fast, zero-dependency event emitter for Gland.
+author: Mahdi
+email: bitsgenix@gmail.com
+github_user: glandjs
+repo_name: emitter
+license: MIT

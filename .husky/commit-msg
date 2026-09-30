@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Resolve the local commitlint through the bin shim, falling back to npx.
+# On Windows the shim is commitlint.exe, which `npx` alone does not find.
+if [ -x "node_modules/.bin/commitlint" ]; then
+  node_modules/.bin/commitlint --edit "$1"
+elif [ -x "node_modules/.bin/commitlint.exe" ]; then
+  node_modules/.bin/commitlint.exe --edit "$1"
+else
+  npx --no -- commitlint --edit "$1"
+fi

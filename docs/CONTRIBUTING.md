@@ -76,47 +76,98 @@ To suggest a new feature:
 
 ## Submitting Pull Requests
 
-1. Fork the repo and create a branch:
+The repository uses a git-flow layout managed with [`gix`](https://github.com/glandjs/gix):
+
+```
+main
+ └── develop
+      ├── feature/*   new capability
+      ├── bugfix/*    correctness fix
+      ├── hotfix/*    urgent fix, from main
+      └── release/*   version bump
+```
+
+1. Branch off `develop` with the kind that matches your change:
    ```bash
-   git checkout -b feat/your-feature-name
+   gix feature start my-feature
+   gix bugfix start my-fix
    ```
-2. Make your changes in `src/` and update/add tests in `tests/`.
-3. Run tests:
+2. Make your changes in `src/` and add tests in `tests/`.
+3. Verify everything before committing:
    ```bash
-   bun test
+   bun run verify
    ```
-4. Run benchmarks (if needed):
+4. Add a changeset describing the user-visible change:
    ```bash
-   bun bench/benchmark.ts
+   bunx changeset
    ```
-5. Commit with a clear message (see [Commit Message Format](#commit-message-format))
-6. Push and open a Pull Request against `main`
+5. Commit. A `commit-msg` hook runs [commitlint](#commit-message-format), and a `pre-push` hook rebuilds and reruns the suite.
+6. Merge back when done:
+   ```bash
+   gix feature finish my-feature
+   gix bugfix finish my-fix
+   ```
 
 **Pull Request Checklist:**
 
+- [ ] A changeset is included for any user-visible change
 - [ ] Tests written for new features or bug fixes
-- [ ] Linting and type-checking pass
+- [ ] `bun run verify` passes
 - [ ] Benchmark impact considered (for perf-related changes)
-- [ ] No external dependencies introduced
+- [ ] No runtime dependencies introduced
 
 ---
 
 ## Development Setup
 
-- **Build:** `bun run build`
-- **Test:** `bun test`
-- **Benchmark:** `bun bench/benchmark.ts`
-- **Run example:** `bun examples/*.ts`
+| Command                | Purpose                                    |
+| ---------------------- | ------------------------------------------ |
+| `bun run build`        | Compile to `dist/`                         |
+| `bun run clean`        | Remove `dist/`                             |
+| `bun run typecheck`    | `tsc --noEmit`                             |
+| `bun run format`       | Rewrite files with Prettier                |
+| `bun run format:check` | Fail if anything is unformatted            |
+| `bun run test`         | Run the suite (imports from `dist/`)       |
+| `bun run bench`        | Throughput benchmark against Node          |
+| `bun run verify`       | Format, typecheck, build and test in order |
+| `bun run pack`         | Produce a tarball for inspection           |
+| `bunx changeset`       | Record a pending release                   |
+
+Note that the test suite imports from `dist/`, so run `bun run build` before
+`bun run test` on a fresh clone. `bun run verify` and the `pre-push` hook both
+handle this for you.
+
+**Run an example:** `bun run examples/wildcard-pattern.ts`
 
 ---
 
 ## Coding Guidelines
 
-- **Zero Dependencies**: Avoid adding any external libraries.
+- **Zero Dependencies**: Avoid adding any runtime libraries.
 - **Performance First**: Every operation should aim for O(1) or O(log n) complexity.
-- **Wildcard Matching**: Must be accurate and fast (consider radix trees or optimized trie structures).
+- **Wildcard Matching**: Must be accurate and fast.
 - **Strict TypeScript**: Fully typed, no `any` unless absolutely unavoidable.
 - **Tests**: All edge cases and wildcards must be tested.
+- **One node shape**: Keep the internal tree uniform. A path segment that is
+  both a leaf and a prefix must not be represented differently depending on
+  registration order — that is what previously made `on` throw and `off` prune
+  live listeners.
+
+---
+
+## Release Process
+
+Releases are automated with [changesets](https://github.com/changesets/changesets).
+
+1. Every user-visible change adds a file under `.changeset/` via `bunx changeset`.
+2. Merging into `main` runs `.github/workflows/release.yml`.
+3. That workflow opens or updates a **Version Packages** pull request, which bumps
+   `package.json`, updates `CHANGELOG.md`, and consumes the changesets.
+4. Merging the version pull request publishes to npm and creates a Git tag.
+5. Pre-release tags are available as `alpha` and `beta` via
+   `bun run release:alpha` and `bun run release:beta`.
+
+A commit that only touches CI, docs or tests does not need a changeset.
 
 ---
 
