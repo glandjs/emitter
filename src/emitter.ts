@@ -6,7 +6,10 @@ export class EventEmitter<T = Record<string, any>> {
   private root: Node = createNode();
   private cache: Record<string, CacheEntry> = Object.create(null);
   private id = 0;
-  constructor(private spliter: string = ':', private maxCacheSize = 64) {}
+  constructor(
+    private spliter: string = ':',
+    private maxCacheSize = 64,
+  ) {}
 
   public on<K extends keyof T & string>(event: K, listener: (payload: T[K]) => void) {
     let node = this.root;

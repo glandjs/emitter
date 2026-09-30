@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# The suite imports from dist/, so a stale build would hide a real failure.
+bun run build && bun run test
