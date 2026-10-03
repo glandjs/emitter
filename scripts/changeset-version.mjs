@@ -50,7 +50,8 @@ if (!entry) {
 }
 
 const today = new Date().toISOString().slice(0, 10);
-const heading = `## [${entry.version}] - ${today}`;
+// An en dash, to match the hand-written entries in this file.
+const heading = `## [${entry.version}] – ${today}`;
 const section = `${heading}\n\n${entry.body}\n`;
 
 if (!existsSync(target)) {
