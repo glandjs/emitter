@@ -5,9 +5,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) an
 
 Entries are listed newest first.
 
-## [Unreleased]
-
-Already in the repository but not yet published. `1.1.4` is still the latest release on npm.
+## [1.1.5] – 2026-10-03
 
 ### Fixed
 
